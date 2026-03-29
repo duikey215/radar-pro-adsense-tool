@@ -8,23 +8,28 @@ import concurrent.futures
 from datetime import datetime
 import random
 
-# Try importing whois for domain age, gracefully fallback if not installed
+# Try importing whois for domain age
 try:
     import whois
     WHOIS_AVAILABLE = True
 except ImportError:
     WHOIS_AVAILABLE = False
 
-# --- 1. PAGE SETUP & PREMIUM CSS (SaaS Level Look) ---
-st.set_page_config(page_title="Radar Pro V7 | Elite AdSense Auditor", layout="wide", page_icon="🧿")
+# --- 1. PAGE SETUP & AGGRESSIVE CSS (NO TRIMMING) ---
+st.set_page_config(page_title="Radar Pro V7.2 | Elite AdSense Auditor", layout="wide", page_icon="🧿")
 
 st.markdown("""
     <style>
-    /* Clean Iframe Look for Blogger */
+    /* 🛡️ ANTI-IFRAME BRANDING (Hides Streamlit Badge & Fullscreen) */
     #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    footer {visibility: hidden; display: none !important;}
+    header {visibility: hidden; display: none !important;}
+    .viewerBadge_container__1QS98 {display: none !important;}
+    .stAppDeployButton {display: none !important;}
+    [data-testid="stStatusWidget"] {display: none !important;}
+    button[title="View fullscreen"] { display: none !important; }
     
+    /* Overall Design */
     .stApp { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
     
     /* Hero Section */
@@ -37,7 +42,7 @@ st.markdown("""
     .hero-title span { color: #3b82f6; }
     .hero-subtitle { font-size: 16px; color: #94a3b8; }
     
-    /* Metric Cards Flexbox */
+    /* Metric Cards */
     .metric-container { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
     .metric-card {
         background: white; padding: 20px; border-radius: 12px; flex: 1; min-width: 150px;
@@ -45,69 +50,50 @@ st.markdown("""
     }
     .metric-value { font-size: 30px; font-weight: 800; color: #0f172a; margin-top: 5px;}
     .metric-label { font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;}
-    
-    /* Input Box styling */
-    .stTextInput input { border-radius: 8px !important; border: 2px solid #cbd5e1 !important; padding: 15px !important; font-size: 16px !important; }
-    .stTextInput input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 2px rgba(59,130,246,0.2) !important; }
 
-    /* ========================================================
-       🔥 NEW SWIPEABLE CAROUSEL & MENU UI (REPLACES TABS) 🔥
-       ======================================================== */
-    
-    /* Top Menu Links (Scrollable) */
+    /* Swipeable Carousel & Menu */
     .slider-nav {
         display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; padding-bottom: 10px;
         scrollbar-width: none; -ms-overflow-style: none;
     }
     .slider-nav::-webkit-scrollbar { display: none; }
-    
     .slider-nav-btn {
         background: #f1f5f9; color: #475569; padding: 10px 20px; border-radius: 30px;
         font-weight: 700; font-size: 14px; white-space: nowrap; cursor: pointer;
-        border: 2px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        border: 2px solid #e2e8f0; transition: all 0.3s ease;
     }
-    .slider-nav-btn:hover, .slider-nav-btn:active { background: #3b82f6; color: white; border-color: #3b82f6; }
-    
-    /* Bottom Cards (Swipeable) */
     .slider-container {
         display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 15px;
         padding-bottom: 20px; scrollbar-width: none; -ms-overflow-style: none; scroll-behavior: smooth;
     }
     .slider-container::-webkit-scrollbar { display: none; }
-    
     .slider-card {
-        flex: 0 0 88%; /* Mobile peek effect */
-        scroll-snap-align: center; background: white; border: 1px solid #e2e8f0;
+        flex: 0 0 88%; scroll-snap-align: center; background: white; border: 1px solid #e2e8f0;
         border-top: 4px solid #3b82f6; border-radius: 12px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
-    @media (min-width: 768px) { .slider-card { flex: 0 0 calc(50% - 10px); scroll-snap-align: start; } }
-    @media (min-width: 1024px) { .slider-card { flex: 0 0 calc(33.333% - 14px); scroll-snap-align: start; } }
+    @media (min-width: 768px) { .slider-card { flex: 0 0 calc(33.333% - 14px); } }
     
     .card-title { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px;}
     
-    /* Health Badges inside Cards */
-    .status-badge { display: flex; align-items: flex-start; padding: 12px 15px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; font-size: 13.5px;}
-    .status-badge .icon { margin-right: 12px; font-size: 18px; line-height: 1.2; }
-    .status-badge > div { line-height: 1.4; }
-    .badge-pass { background-color: #dcfce7; color: #166534; border-left: 5px solid #22c55e; }
-    .badge-warn { background-color: #fef9c3; color: #854d0e; border-left: 5px solid #eab308; }
-    .badge-fail { background-color: #fee2e2; color: #991b1b; border-left: 5px solid #ef4444; }
+    /* Health Badges */
+    .status-badge { display: flex; align-items: flex-start; padding: 12px 15px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; font-size: 13.5px; line-height: 1.4; border-left: 5px solid #ccc;}
+    .badge-pass { background-color: #dcfce7; color: #166534; border-color: #22c55e; }
+    .badge-warn { background-color: #fef9c3; color: #854d0e; border-color: #eab308; }
+    .badge-fail { background-color: #fee2e2; color: #991b1b; border-color: #ef4444; }
 
-    /* Authority Advice Box */
+    /* Advice Wrapper */
     .advice-wrapper { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-top: 15px; }
-    .advice-header { font-size: 18px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px;}
-    .advice-sub { color: #475569; font-size: 15px; margin-bottom: 20px; line-height: 1.6;}
-    .advice-item { background: #fef2f2; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #ef4444; color: #7f1d1d; font-weight: 500; font-size: 14.5px;}
-    .advice-success .advice-header { color: #166534; border-bottom-color: #dcfce7; }
-    .advice-item-success { background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #22c55e; color: #14532d; font-weight: 500; font-size: 14.5px;}
+    .advice-header { font-size: 18px; font-weight: 800; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px; text-transform: uppercase;}
+    .advice-item { background: #fef2f2; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #ef4444; color: #7f1d1d; font-weight: 500;}
+    .advice-item-success { background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 5px solid #22c55e; color: #14532d; font-weight: 500;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. HERO HEADER ---
+# --- HEADER ---
 st.markdown("""
     <div class="hero-box">
         <div class="hero-title">🧿 Radar <span>Pro</span> Max</div>
-        <div class="hero-subtitle">Swipeable 50-Page Engine • Anti-Ban Stealth Mode Enabled</div>
+        <div class="hero-subtitle">Swipeable 50-Page Engine • Professional Iframe-Ready Edition</div>
     </div>
 """, unsafe_allow_html=True)
 
@@ -122,270 +108,169 @@ HEADERS = {
 # 🛡️ STEALTH FUNCTION
 def fetch_and_analyze_page(url):
     try:
-        time.sleep(random.uniform(0.2, 0.7)) # Anti-Ban Jitter
+        time.sleep(random.uniform(0.2, 0.7)) # Jitter
         res = requests.get(url, headers=HEADERS, timeout=12, allow_redirects=True)
         is_loop = len(res.history) >= 3 
-        
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, 'html.parser')
             text = soup.get_text().lower()
-            words = len(text.split())
-            return {'url': url, 'status': res.status_code, 'words': words, 'loop': is_loop, 'history': res.history, 'text': text}
-        else:
-            return {'url': url, 'status': res.status_code, 'words': 0, 'loop': is_loop, 'history': res.history, 'text': ""}
-    except Exception:
-        return {'url': url, 'status': 0, 'words': 0, 'loop': False, 'history':[], 'text': ""}
+            # Extract basic SEO info for deep analysis
+            h1s = len(soup.find_all('h1'))
+            return {'url': url, 'status': res.status_code, 'words': len(text.split()), 'loop': is_loop, 'history': res.history, 'text': text, 'h1s': h1s}
+        return {'url': url, 'status': res.status_code, 'words': 0, 'loop': is_loop, 'history': res.history, 'text': "", 'h1s': 0}
+    except:
+        return {'url': url, 'status': 0, 'words': 0, 'loop': False, 'history':[], 'text': "", 'h1s': 0}
 
-# HTML Generator for Badges
 def get_badge_html(condition, pass_text, fail_text, warn_condition=False, warn_text=""):
-    if warn_condition:
-        return f"<div class='status-badge badge-warn'><span class='icon'>⚠️</span> <div>{warn_text}</div></div>"
-    elif condition:
-        return f"<div class='status-badge badge-pass'><span class='icon'>✅</span> <div>{pass_text}</div></div>"
-    else:
-        return f"<div class='status-badge badge-fail'><span class='icon'>❌</span> <div>{fail_text}</div></div>"
+    cls = "badge-pass" if condition else "badge-fail"
+    if warn_condition: cls = "badge-warn"
+    icon = "✅" if condition and not warn_condition else "⚠️" if warn_condition else "❌"
+    txt = warn_text if warn_condition else (pass_text if condition else fail_text)
+    return f"<div class='status-badge {cls}'><span style='margin-right:10px;'>{icon}</span><div>{txt}</div></div>"
 
-# --- 3. MAIN ENGINE (50-PAGE DEEP SCAN) ---
+# --- MAIN ENGINE ---
 if st.button("🚀 INITIATE DEEP SCAN", type="primary", use_container_width=True):
     if not url_input.strip() or not url_input.startswith(("http://", "https://")):
-        st.error("⚠️ Please enter a valid URL starting with http:// or https://")
+        st.error("⚠️ Please enter a valid URL.")
     else:
-        # Invisible dynamic loading block (no click-to-expand)
         loading_box = st.empty()
-        
         start_time = time.time()
-        score = 100
-        advice_list =[]
+        score, advice_list = 100, []
         
         try:
-            loading_box.info("⏳ 🌍 Crawling Homepage & Analyzing Server Response...")
+            loading_box.info("⏳ 🌍 Crawling Homepage & Analyzing Server...")
             main_res = requests.get(url_input, headers=HEADERS, timeout=15)
             load_time = round(time.time() - start_time, 2)
             soup = BeautifulSoup(main_res.text, 'html.parser')
             main_text = soup.get_text().lower()
             has_adsense_code = "pagead2.googlesyndication.com" in main_res.text
-            time.sleep(0.5)
             
-            loading_box.warning("⏳ 🕸️ Extracting Architecture & Finding Deep Links (up to 50)...")
+            # Link Extraction
             links = soup.find_all('a', href=True)
-            internal_urls =[]
-            for a in links:
-                full_url = urljoin(url_input, a['href'])
-                clean_url = full_url.split('#')[0]
-                if urlparse(clean_url).netloc == urlparse(url_input).netloc and clean_url not in internal_urls:
-                    internal_urls.append(clean_url)
+            internal_urls = list(set([urljoin(url_input, a['href']).split('#')[0] for a in links if urlparse(urljoin(url_input, a['href'])).netloc == urlparse(url_input).netloc]))
             
-            scan_list = internal_urls[:50] 
+            scan_list = internal_urls[:50]
             if url_input not in scan_list: scan_list.insert(0, url_input)
             
-            loading_box.info(f"⏳ 🥷 Stealth Mode Active: Safely scanning {len(scan_list)} pages to bypass firewalls...")
+            loading_box.warning(f"⏳ 🥷 Stealth Mode: Deep Scanning {len(scan_list)} pages...")
             
-            scanned_pages_data =[]
+            scanned_pages_data = []
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                results = executor.map(fetch_and_analyze_page, scan_list)
-                for r in results:
-                    scanned_pages_data.append(r)
+                scanned_pages_data = list(executor.map(fetch_and_analyze_page, scan_list))
             
+            # Deep Math
             s_200 = sum(1 for p in scanned_pages_data if p['status'] == 200)
             s_404 = sum(1 for p in scanned_pages_data if p['status'] >= 400)
-            s_301 = sum(1 for p in scanned_pages_data if any(h.status_code == 301 for h in p['history']))
-            s_302 = sum(1 for p in scanned_pages_data if any(h.status_code in[302, 307] for h in p['history']))
             redirect_loops = sum(1 for p in scanned_pages_data if p['loop'])
-            
-            total_words = sum(p['words'] for p in scanned_pages_data)
-            valid_pages_count = max(1, len([p for p in scanned_pages_data if p['words'] > 0]))
-            avg_word_count = total_words // valid_pages_count
-            
+            avg_word_count = sum(p['words'] for p in scanned_pages_data) // max(1, len([p for p in scanned_pages_data if p['words'] > 0]))
             combined_text = " ".join([p['text'] for p in scanned_pages_data])
-            time.sleep(0.5)
-
-            loading_box.warning("⏳ 🛡️ Auditing AdSense Policies, SEO & Domain Health...")
+            
+            loading_box.success("⏳ 🛡️ Finalizing Security & Policy Audit...")
+            
+            # Logic Checks (No Trimming)
             has_ssl = url_input.startswith("https")
-            is_www = "www." in urlparse(url_input).netloc
+            found_essentials = [ep for ep in ["privacy", "contact", "about", "disclaimer", "terms"] if any(ep in u.lower() for u in internal_urls)]
+            banned_keywords = ["hack", "cracked", "mod apk", "adult", "casino", "gambling", "movie download", "porn", "nude", "violence"]
+            found_banned = [w for w in banned_keywords if w in combined_text]
             
-            essential_list =["privacy", "contact", "about", "disclaimer", "terms"]
-            found_essentials =[ep for ep in essential_list if any(ep in u for u in internal_urls)]
-            
-            banned_keywords =["hack", "cracked", "mod apk", "adult", "casino", "gambling", "movie download", "porn", "nude", "violence", "weapons"]
-            found_banned =[w for w in banned_keywords if w in combined_text]
-            
-            cookie_consent = any(w in combined_text for w in["cookie", "consent", "accept", "got it", "gdpr"])
-            under_construction = any(w in combined_text for w in["under construction", "coming soon", "lorem ipsum", "hello world"])
-            
+            # Readability
             sentences = max(1, len(re.split(r'[.!?]+', main_text)))
-            readability_score = (len(main_text.split()) / sentences)
-            is_readable = 8 <= readability_score <= 25 
+            is_readable = 8 <= (len(main_text.split()) / sentences) <= 25
             
+            # Meta & Tags
             has_title = soup.title is not None and len(soup.title.text) > 10
             has_desc = soup.find("meta", {"name": "description"}) is not None
             h1_tags = len(soup.find_all('h1'))
             h2_tags = len(soup.find_all('h2'))
-            h3_tags = len(soup.find_all('h3'))
-            images = soup.find_all('img')
-            img_total = len(images)
-            img_alt = sum(1 for img in images if img.get('alt'))
+            img_total = len(soup.find_all('img'))
+            img_alt = sum(1 for img in soup.find_all('img') if img.get('alt'))
             
             has_robots = requests.get(urljoin(url_input, "robots.txt"), headers=HEADERS, timeout=5).status_code == 200
             has_sitemap = requests.get(urljoin(url_input, "sitemap.xml"), headers=HEADERS, timeout=5).status_code == 200
             has_viewport = soup.find("meta", {"name": "viewport"}) is not None
             
-            domain_age_days = "Unknown"
+            # Domain Age
+            domain_days = "Unknown"
             if WHOIS_AVAILABLE:
                 try:
-                    domain_info = whois.whois(urlparse(url_input).netloc)
-                    creation_date = domain_info.creation_date
-                    if type(creation_date) is list: creation_date = creation_date[0]
-                    if creation_date:
-                        domain_age_days = (datetime.now() - creation_date).days
+                    d_info = whois.whois(urlparse(url_input).netloc)
+                    c_date = d_info.creation_date[0] if isinstance(d_info.creation_date, list) else d_info.creation_date
+                    if c_date: domain_days = (datetime.now() - c_date).days
                 except: pass
 
-            loading_box.success("⏳ 📊 Compiling Final Report Data...")
+            # --- Scoring Logic ---
+            if not has_ssl: score -= 15; advice_list.append("Enable HTTPS (SSL) immediately.")
+            if s_404 > 0: score -= 15; advice_list.append(f"Fix {s_404} broken (404) links.")
+            if len(found_essentials) < 4: score -= 20; advice_list.append("Add missing Policy pages (Privacy, Terms, About).")
+            if found_banned: score -= 30; advice_list.append(f"Remove prohibited content: {', '.join(set(found_banned))}.")
+            if avg_word_count < 600: score -= 15; advice_list.append(f"Thin Content (Avg {avg_word_count} words). Aim for 600+.")
+            if h1_tags != 1: score -= 5; advice_list.append(f"Found {h1_tags} H1 tags. Exactly ONE is required.")
             
-            # --- SCORING ---
-            if not has_ssl: score -= 15; advice_list.append("Install an SSL Certificate (HTTPS) immediately. Google strictly blocks unsecured sites.")
-            if load_time > 3.0: score -= 5; advice_list.append(f"Server response is slow ({load_time}s). AdSense algorithms favor fast-loading content.")
-            if s_404 > 0: score -= 15; advice_list.append(f"Found {s_404} broken (404) internal links. This triggers 'Site Behavior' policy violations.")
-            if redirect_loops > 0: score -= 10; advice_list.append(f"Found {redirect_loops} redirect loops. Fix them to allow Googlebot crawling.")
-            if len(found_essentials) < 4: score -= 20; advice_list.append(f"Missing mandatory policy pages (Found {len(found_essentials)}/5). Add Privacy, Contact, and Terms pages.")
-            if found_banned: score -= 30; advice_list.append(f"CRITICAL: Policy violation detected. Remove prohibited content: {', '.join(set(found_banned))}.")
-            if avg_word_count < 600: score -= 15; advice_list.append(f"Thin Content Risk. Your average word count is {avg_word_count}. AdSense requires deep, unique content (600+ words).")
-            if h1_tags != 1: score -= 5; advice_list.append(f"SEO Tagging: Homepage has {h1_tags} H1 tags. It must have exactly ONE for proper indexing.")
-            if not has_sitemap: score -= 5; advice_list.append("Sitemap.xml is missing. Required for fast Google indexing via Search Console.")
-            if under_construction: score -= 25; advice_list.append("Site appears to be 'Under Construction' or contains dummy Lorem Ipsum text.")
-            if domain_age_days != "Unknown" and int(domain_age_days) < 30: score -= 10; advice_list.append("Domain is less than 30 days old. Establish organic trust before applying.")
-
             score = max(0, min(score, 100))
-            
-            # Remove loader cleanly
             loading_box.empty()
-            st.success("✅ Deep Scan Completed Successfully!")
+            st.success("✅ Deep Scan Completed!")
 
-            # --- PRESENTATION METRICS ---
-            score_color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
+            # Metric Dashboard
+            score_col = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
             st.markdown(f"""
-            <div class="metric-container">
-                <div class="metric-card" style="border-top-color: {score_color};">
-                    <div class="metric-label">Approval Odds</div>
-                    <div class="metric-value" style="color: {score_color};">{score}%</div>
+                <div class="metric-container">
+                    <div class="metric-card" style="border-top-color:{score_col}"><div class="metric-label">Odds</div><div class="metric-value" style="color:{score_col}">{score}%</div></div>
+                    <div class="metric-card"><div class="metric-label">Scan Depth</div><div class="metric-value">{len(scanned_pages_data)}</div></div>
+                    <div class="metric-card"><div class="metric-label">Avg Words</div><div class="metric-value">{avg_word_count}</div></div>
+                    <div class="metric-card"><div class="metric-label">Speed</div><div class="metric-value">{load_time}s</div></div>
                 </div>
-                <div class="metric-card">
-                    <div class="metric-label">Scan Depth</div>
-                    <div class="metric-value">{len(scanned_pages_data)} <span style="font-size:14px; color:#64748b;">Pages</span></div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Avg. Content</div>
-                    <div class="metric-value">{avg_word_count} <span style="font-size:14px; color:#64748b;">Words</span></div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Server Speed</div>
-                    <div class="metric-value">{load_time}s</div>
-                </div>
-            </div>
             """, unsafe_allow_html=True)
-            st.progress(score / 100)
-            st.write("")
+            st.progress(score/100)
 
-            # --- BUILD HTML FOR EACH CATEGORY CARD ---
-            c_tech = get_badge_html(s_200 > 0, f"Website Status: 200 OK (Scanned {s_200} live pages)", "Website Connection Failed") + \
-                     get_badge_html(has_ssl, "SSL Certificate Valid (HTTPS)", "SSL Missing. Critical for AdSense.") + \
-                     get_badge_html(load_time <= 2.5, f"LCP/Server Latency: Fast ({load_time}s)", f"Server Latency: Slow ({load_time}s)", warn_condition=(2.5 < load_time <= 4.0), warn_text=f"Server Latency: Average ({load_time}s). Optimization needed.") + \
-                     get_badge_html(is_www, "Canonical URL: WWW setup correctly", "Canonical URL: Non-WWW detected. Ensure 301 redirects are working.")
+            # Swipeable Carousel Components
+            c_tech = get_badge_html(s_200 > 0, f"Status: 200 OK ({s_200} pages)", "Connection Failed") + \
+                     get_badge_html(has_ssl, "SSL Secure (HTTPS)", "SSL Missing!") + \
+                     get_badge_html(load_time <= 2.5, f"Fast Load ({load_time}s)", f"Slow Load ({load_time}s)", warn_condition=(2.5 < load_time < 4))
+            
+            c_err = get_badge_html(s_404 == 0, "No 404 Errors Found", f"Found {s_404} Broken Links") + \
+                    get_badge_html(redirect_loops == 0, "No Redirect Loops", f"{redirect_loops} Loops Found")
+            
+            c_pol = get_badge_html(len(found_essentials) >= 4, f"Policies: {len(found_essentials)}/5 Found", "Mandatory Pages Missing") + \
+                    get_badge_html(not found_banned, "Clean Content Policy", "Banned Keywords Detected")
+            
+            c_seo = get_badge_html(avg_word_count >= 600, f"Rich Content ({avg_word_count} words)", "Thin Content Warning", warn_condition=(400 < avg_word_count < 600)) + \
+                    get_badge_html(h1_tags == 1, "Perfect H1 Structure", f"H1 Tag Error ({h1_tags} found)") + \
+                    get_badge_html(is_readable, "Good Readability Score", "Poor Grammar/Readability")
 
-            c_errs = get_badge_html(s_404 == 0, f"Broken Links (404): 0 Found out of {len(scan_list)}", f"Broken Links Alert! Found {s_404} dead pages.") + \
-                     get_badge_html(redirect_loops == 0, "Redirect Loops: 0 Found (Healthy)", f"Redirect Loops: {redirect_loops} detected! Googlebot will fail to crawl.") + \
-                     get_badge_html(s_302 == 0, "Temporary Redirects (302): None", "", warn_condition=(s_302 > 0), warn_text=f"Temp Redirects (302) Found: {s_302}. Use 301 Permanent instead.") + \
-                     get_badge_html(s_301 >= 0, f"Permanent Redirects (301): {s_301} Logged (SEO Safe)", "")
+            c_str = get_badge_html(has_robots, "Robots.txt Present", "Robots.txt Missing") + \
+                    get_badge_html(has_sitemap, "Sitemap.xml Found", "Sitemap.xml Missing") + \
+                    get_badge_html(has_viewport, "Mobile Responsive", "Mobile Viewport Missing")
 
-            c_pol = get_badge_html(len(found_essentials) >= 4, f"Essential Pages Found ({len(found_essentials)}/5)", "Missing Mandatory Privacy/Contact Pages!") + \
-                    get_badge_html(not found_banned, "Content Policy: 100% Clean", f"Prohibited Material Found! Words: {', '.join(set(found_banned))}") + \
-                    get_badge_html(not under_construction, "Low Value Content Check: Site is Live", "Site contains 'Under Construction' or 'Lorem Ipsum' spam.") + \
-                    get_badge_html(cookie_consent, "Cookie/GDPR Consent Detected", "", warn_condition=(not cookie_consent), warn_text="Cookie Consent missing. Highly recommended for European Traffic.")
+            d_age_warn = (domain_days != "Unknown" and 30 <= int(domain_days) < 60)
+            d_age_pass = (domain_days != "Unknown" and int(domain_days) >= 60)
+            c_dom = get_badge_html(d_age_pass, f"Domain Age: {domain_days} Days", "Domain Too New", warn_condition=d_age_warn, warn_text=f"Age: {domain_days} Days (Wait 60+ days)") + \
+                    get_badge_html(has_adsense_code, "AdSense Code Detected", "No AdSense Code Found", warn_condition=(not has_adsense_code))
 
-            c_seo = get_badge_html(avg_word_count >= 600, f"Deep Content Scan: {avg_word_count} avg words per page", f"Thin Content Warning: Only {avg_word_count} avg words. High risk of rejection.", warn_condition=(400 <= avg_word_count < 600), warn_text=f"Moderate Content Depth: {avg_word_count} avg words. Target 600+.") + \
-                    get_badge_html(has_title and has_desc, "Meta Title & Description perfectly mapped", "Missing Title or Description Meta tags.") + \
-                    get_badge_html(h1_tags == 1 and h2_tags > 0 and h3_tags >= 0, f"Heading Hierarchy: Perfect (H1: {h1_tags}, H2: {h2_tags}, H3: {h3_tags})", f"Heading Error: Found {h1_tags} H1 tags. Needs exactly 1.") + \
-                    get_badge_html(img_total > 0 and (img_alt/img_total) > 0.8, f"Image SEO: {img_alt}/{img_total} Optimized with Alt Text", "", warn_condition=(img_total > 0 and (img_alt/img_total) <= 0.8), warn_text=f"Image SEO: Only {img_alt}/{img_total} images have Alt Text.") + \
-                    get_badge_html(is_readable, "Readability & Grammar Score: Healthy sentence length", "", warn_condition=(not is_readable), warn_text="Readability Warning: Sentences are either too short (spammy) or too long (hard to read).")
-
-            c_str = get_badge_html(has_robots, "Robots.txt present (Search Engine friendly)", "Robots.txt missing! Google cannot crawl your site.") + \
-                    get_badge_html(has_sitemap, "Sitemap.xml present (Indexing ready)", "Sitemap.xml missing! Crucial for Webmaster tools.") + \
-                    get_badge_html(has_viewport, "Mobile Viewport Tag (100% Responsive)", "Not Mobile Friendly! Missing viewport tag.") + \
-                    get_badge_html(len(scan_list) > 15, f"Internal Linking Depth: Excellent ({len(scan_list)} pages crawled)", "", warn_condition=(len(scan_list) <= 15), warn_text=f"Site Structure: Too small (Only {len(scan_list)} pages crawled). Build more categories.")
-
-            # Domain Age Logic parsing
-            d_pass, d_warn, w_txt, f_txt, p_txt = True, False, "", "", ""
-            if domain_age_days != "Unknown":
-                if int(domain_age_days) >= 60:
-                    d_pass = True; p_txt = f"Domain Age: {domain_age_days} Days (Trusted)"
-                elif 30 <= int(domain_age_days) < 60:
-                    d_pass = True; d_warn = True; w_txt = f"Domain Age: {domain_age_days} Days (Wait a little longer to apply)."
-                else:
-                    d_pass = False; f_txt = f"Domain Age: {domain_age_days} Days (Too New)"
-            else:
-                d_pass = True; d_warn = True; w_txt = "Domain Age: Could not verify automatically. Ensure domain is 1-2 months old."
-
-            c_dom = get_badge_html(d_pass, p_txt, f_txt, warn_condition=d_warn, warn_text=w_txt) + \
-                    get_badge_html(has_adsense_code, "AdSense Code Detected! Site has ad placements.", "", warn_condition=(not has_adsense_code), warn_text="No AdSense Publisher Code found in HTML `<head>`.") + \
-                    get_badge_html(True, "", "", warn_condition=True, warn_text="Google Indexing: Go to Google and search 'site:yourdomain.com' to verify indexed pages.")
-
-            # --- ASSEMBLE SWIPEABLE CAROUSEL & MENU ---
             carousel_html = f"""
             <div class="slider-nav">
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-1').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">⚙️ Tech & Speed</div>
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-2').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">🔗 Redirects & Errors</div>
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-3').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">🛡️ AdSense Policy</div>
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-4').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">📝 Content & SEO</div>
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-5').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">🗂️ Structure</div>
-                <div class="slider-nav-btn" onclick="document.getElementById('cat-6').scrollIntoView({{behavior: 'smooth', block: 'nearest', inline: 'center'}})">🌐 Domain</div>
+                <div class="slider-nav-btn">⚙️ Tech</div><div class="slider-nav-btn">🔗 Errors</div><div class="slider-nav-btn">🛡️ Policy</div><div class="slider-nav-btn">📝 SEO</div><div class="slider-nav-btn">🗂️ Structure</div><div class="slider-nav-btn">🌐 Domain</div>
             </div>
-            
             <div class="slider-container">
-                <div class="slider-card" id="cat-1">
-                    <div class="card-title">⚙️ Tech & Speed</div>{c_tech}
-                </div>
-                <div class="slider-card" id="cat-2">
-                    <div class="card-title">🔗 Redirects & Errors</div>{c_errs}
-                </div>
-                <div class="slider-card" id="cat-3">
-                    <div class="card-title">🛡️ AdSense Policy</div>{c_pol}
-                </div>
-                <div class="slider-card" id="cat-4">
-                    <div class="card-title">📝 Content & SEO</div>{c_seo}
-                </div>
-                <div class="slider-card" id="cat-5">
-                    <div class="card-title">🗂️ Structure</div>{c_str}
-                </div>
-                <div class="slider-card" id="cat-6">
-                    <div class="card-title">🌐 Domain</div>{c_dom}
-                </div>
+                <div class="slider-card"><div class="card-title">⚙️ Tech & Speed</div>{c_tech}</div>
+                <div class="slider-card"><div class="card-title">🔗 Errors & Links</div>{c_err}</div>
+                <div class="slider-card"><div class="card-title">🛡️ AdSense Policy</div>{c_pol}</div>
+                <div class="slider-card"><div class="card-title">📝 Content & SEO</div>{c_seo}</div>
+                <div class="slider-card"><div class="card-title">🗂️ Site Structure</div>{c_str}</div>
+                <div class="slider-card"><div class="card-title">🌐 Domain Health</div>{c_dom}</div>
             </div>
             """
             st.markdown(carousel_html, unsafe_allow_html=True)
 
-            # --- AUTHORITY ADVICE SECTION ---
+            # Advice Section
             if not advice_list:
-                success_html = """
-                <div class='advice-wrapper advice-success'>
-                    <div class='advice-header'>🎉 EXCELLENT: SITE READY FOR MONETIZATION</div>
-                    <p class='advice-sub'>Your website meets all primary Google AdSense quality guidelines. Before submitting your final application, ensure you maintain the following best practices:</p>
-                    <div class='advice-item-success'><b>1. Domain Trust:</b> Ensure your domain is consistently active for at least 1-2 months.</div>
-                    <div class='advice-item-success'><b>2. Organic Traffic:</b> Avoid bot or paid traffic. AdSense highly prefers visitors coming organically from Google or Bing Search.</div>
-                    <div class='advice-item-success'><b>3. Ad Placement Readiness:</b> Keep clear, non-intrusive spaces in your layout where Ad Units will eventually appear.</div>
-                </div>
-                """
-                st.markdown(success_html, unsafe_allow_html=True)
+                st.markdown("<div class='advice-wrapper advice-success'><div class='advice-header'>🎉 EXCELLENT: SITE READY</div><div class='advice-item-success'><b>Approved:</b> Site meets all quality guidelines.</div></div>", unsafe_allow_html=True)
             else:
-                advice_html = "<div class='advice-wrapper'>"
-                advice_html += "<div class='advice-header'>⚠️ ACTION REQUIRED: POLICY & SEO FIXES</div>"
-                advice_html += "<p class='advice-sub'>Our automated systems detected the following issues that typically cause AdSense application rejections. Please resolve these critical errors before submitting your application to Google:</p>"
-                for idx, advice in enumerate(advice_list):
-                    advice_html += f"<div class='advice-item'><b>{idx+1}.</b> {advice}</div>"
-                advice_html += "</div>"
-                
-                st.markdown(advice_html, unsafe_allow_html=True)
+                advice_html = "<div class='advice-wrapper'><div class='advice-header'>⚠️ ACTION REQUIRED: FIXES</div>"
+                for i, a in enumerate(advice_list): advice_html += f"<div class='advice-item'><b>{i+1}.</b> {a}</div>"
+                st.markdown(advice_html + "</div>", unsafe_allow_html=True)
 
         except Exception as e:
             loading_box.empty()
-            st.error("❌ **Deep Scan Failed:** Ensure the website is live. If the site is protected by strict Cloudflare ('Under Attack' mode), bots might be blocked.")
+            st.error("❌ Critical Error Scanning Site.")
 
-st.markdown("<br><hr><p style='text-align:center; color:#94a3b8; font-size: 13px;'>Powered by Radar Pro V7 Master Engine • Swipeable Professional Auditor</p>", unsafe_allow_html=True)
+st.markdown("<br><hr><center><small>Radar Pro Master V7.2 • Enterprise Edition • Anti-Iframe Distraction Enabled</small></center>", unsafe_allow_html=True)
